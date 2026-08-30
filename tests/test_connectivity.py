@@ -2,25 +2,31 @@ import socket
 import pytest
 
 
-def test_can_connect_to_open_port():
-    """A known-open port (google.com:80) should accept a TCP connection."""
+@pytest.fixture
+def tcp_socket():
+    """Provides a fresh TCP socket for each test, and guarantees it's closed afterward."""
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.settimeout(3)
+    yield sock          # test runs here, using this socket
+    sock.close()         # runs after the test, even if it fails
+
+
+@pytest.mark.parametrize("host,port", [
+    ("google.com", 80),
+    ("google.com", 443),
+])
+def test_known_open_ports_connect_successfully(tcp_socket, host, port):
+    """Well-known open ports (HTTP, HTTPS) should accept TCP connections."""
     try:
-        sock.connect(("google.com", 80))
+        tcp_socket.connect((host, port))
         connected = True
     except Exception:
         connected = False
-    finally:
-        sock.close()
 
     assert connected is True
 
 
-def test_connection_to_closed_port_fails():
-    """A port nothing is listening on should not connect successfully."""
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.settimeout(3)
+def test_closed_port_times_out(tcp_socket):
+    """An unused high-numbered port should not respond, causing a timeout."""
     with pytest.raises(socket.timeout):
-        sock.connect(("google.com", 12345))
-    sock.close()
+        tcp_socket.connect(("google.com", 12345))
