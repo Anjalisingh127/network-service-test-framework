@@ -39,3 +39,23 @@ def test_server_response_is_not_empty(echo_server, client_socket):
     response = client_socket.recv(1024)
 
     assert len(response) > 0
+
+def test_recv_after_server_stops_raises_or_returns_empty(echo_server, client_socket):
+    """If the server shuts down mid-connection, client recv should either
+    raise an error or return empty bytes (indicating closed connection) —
+    it must not hang forever."""
+    client_socket.connect((echo_server.host, echo_server.port))
+    echo_server.stop()
+
+    try:
+        response = client_socket.recv(1024)
+        assert response == b""
+    except (ConnectionResetError, OSError):
+        pass  # also an acceptable outcome — connection was forcibly closed
+
+
+def test_connect_to_invalid_host_raises_error(client_socket):
+    """Connecting to a non-existent hostname should raise a clear error,
+    not hang or fail silently."""
+    with pytest.raises(socket.gaierror):
+        client_socket.connect(("this-host-does-not-exist.invalid", 80))
