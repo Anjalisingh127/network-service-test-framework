@@ -34,6 +34,8 @@ class ServiceCheckResult:
     """Structured evidence captured while checking a TCP service."""
 
     service_name: str
+    host: str
+    port: int
     status: CheckStatus
     success: bool
     latency_ms: float

@@ -27,6 +27,8 @@ def test_reports_available_service(
     result = TCPClient(clock=clock).check_connectivity(service)
 
     assert result.success is True
+    assert result.host == "127.0.0.1"
+    assert result.port == 9001
     assert result.status is CheckStatus.AVAILABLE
     assert result.latency_ms == 12.0
     assert result.error is None

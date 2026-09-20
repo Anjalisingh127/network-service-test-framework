@@ -2,6 +2,7 @@
 
 import socket
 from collections.abc import Callable
+from logging import Logger, getLogger
 from time import perf_counter
 
 from netcheck.models import CheckStatus, ServiceCheckResult, ServiceConfig
@@ -10,8 +11,13 @@ from netcheck.models import CheckStatus, ServiceCheckResult, ServiceConfig
 class TCPClient:
     """Check configured TCP endpoints and return structured outcomes."""
 
-    def __init__(self, clock: Callable[[], float] = perf_counter) -> None:
+    def __init__(
+        self,
+        clock: Callable[[], float] = perf_counter,
+        logger: Logger | None = None,
+    ) -> None:
         self._clock = clock
+        self._logger = logger or getLogger("netcheck")
 
     def check_connectivity(self, service: ServiceConfig) -> ServiceCheckResult:
         """Attempt one TCP connection within the configured timeout."""
@@ -123,12 +129,33 @@ class TCPClient:
         actual_response: str | None = None,
     ) -> ServiceCheckResult:
         elapsed_ms = max(0.0, (self._clock() - started_at) * 1000)
-        return ServiceCheckResult(
+        result = ServiceCheckResult(
             service_name=service.name,
+            host=service.host,
+            port=service.port,
             status=status,
             success=success,
             latency_ms=round(elapsed_ms, 3),
             error=error,
             expected_response=service.expected_response,
             actual_response=actual_response,
+        )
+        self._log_result(result)
+        return result
+
+    def _log_result(self, result: ServiceCheckResult) -> None:
+        log = self._logger.info if result.success else self._logger.warning
+        log(
+            "TCP service check completed",
+            extra={
+                "service_name": result.service_name,
+                "host": result.host,
+                "port": result.port,
+                "status": result.status.value,
+                "success": result.success,
+                "latency_ms": result.latency_ms,
+                "error": result.error,
+                "expected_response": result.expected_response,
+                "actual_response": result.actual_response,
+            },
         )
