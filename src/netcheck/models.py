@@ -11,6 +11,10 @@ class CheckStatus(StrEnum):
     CONNECTION_REFUSED = "connection_refused"
     TIMED_OUT = "timed_out"
     NETWORK_ERROR = "network_error"
+    RESPONSE_RECEIVED = "response_received"
+    RESPONSE_MATCH = "response_match"
+    RESPONSE_MISMATCH = "response_mismatch"
+    EMPTY_RESPONSE = "empty_response"
 
 
 @dataclass(frozen=True, slots=True)
@@ -34,3 +38,5 @@ class ServiceCheckResult:
     success: bool
     latency_ms: float
     error: str | None = None
+    expected_response: str | None = None
+    actual_response: str | None = None

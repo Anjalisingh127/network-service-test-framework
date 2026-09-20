@@ -5,10 +5,11 @@ import threading
 
 
 class LocalTCPServer:
-    """Accept local connections until the fixture is stopped."""
+    """Accept local connections and optionally return a fixed response."""
 
-    def __init__(self) -> None:
+    def __init__(self, response: bytes = b"PONG") -> None:
         self.host = "127.0.0.1"
+        self.response = response
         self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self._socket.bind((self.host, 0))
@@ -29,7 +30,14 @@ class LocalTCPServer:
                 continue
             except OSError:
                 return
-            connection.close()
+            with connection:
+                connection.settimeout(0.5)
+                try:
+                    request = connection.recv(65_536)
+                except TimeoutError:
+                    continue
+                if request and self.response:
+                    connection.sendall(self.response)
 
     def stop(self) -> None:
         self._stopped.set()
