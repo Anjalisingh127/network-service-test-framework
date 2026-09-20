@@ -1,4 +1,10 @@
-venv/
+.venv/
 __pycache__/
-*.pyc
+*.py[cod]
 .pytest_cache/
+.ruff_cache/
+*.egg-info/
+build/
+dist/
+reports/*
+!reports/.gitkeep

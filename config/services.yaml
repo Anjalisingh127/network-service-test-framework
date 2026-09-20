@@ -1,0 +1,12 @@
+services:
+  - name: local-echo
+    host: 127.0.0.1
+    port: 9001
+    timeout_seconds: 2
+    request: PING
+    expected_response: PONG
+
+  - name: unavailable-service
+    host: 127.0.0.1
+    port: 65530
+    timeout_seconds: 1
